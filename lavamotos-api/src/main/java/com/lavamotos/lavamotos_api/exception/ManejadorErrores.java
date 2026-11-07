@@ -13,4 +13,9 @@ public class ManejadorErrores {
     public ResponseEntity<Map<String, String>> noEncontrada(OrdenNoEncontradaException e) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
     }
+    
+    @ExceptionHandler(DatosInvalidosException.class)
+    public ResponseEntity<Map<String, String>> datosInvalidos(DatosInvalidosException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
+    }
 }

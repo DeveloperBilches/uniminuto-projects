@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
+import com.lavamotos.lavamotos_api.exception.DatosInvalidosException;
 
 import org.springframework.stereotype.Service;
 
@@ -19,6 +20,10 @@ public class LavadoService {
     private final AtomicLong secuencia = new AtomicLong(1);
 
     public OrdenLavado registrar(SolicitudLavado solicitud, LocalDateTime horaIngreso) {
+        if (solicitud.getPlaca() == null || solicitud.getPlaca().isBlank()) {
+            throw new DatosInvalidosException("La placa es obligatoria");
+        }
+
         String placa = solicitud.getPlaca().trim().toUpperCase();
 
         OrdenLavado orden = new OrdenLavado();
@@ -28,7 +33,7 @@ public class LavadoService {
         orden.setTipo(solicitud.getTipo());
         orden.setHoraIngreso(horaIngreso);
         orden.setHoraEntregaEstimada(
-                horaIngreso.plusHours(solicitud.getTipo().getDuracionMinutos()));
+                horaIngreso.plusMinutes(solicitud.getTipo().getDuracionMinutos()));
         orden.setValor(calcularValor(solicitud.getTipo().getPrecioBase(), solicitud.getCilindrada()));
 
         ordenes.add(orden);
@@ -56,8 +61,8 @@ public class LavadoService {
     /** Suma lo facturado por todas las órdenes registradas. */
     public double totalRecaudado() {
         double total = 0;
-        for (int i = 1; i < ordenes.size(); i++) {
-            total += ordenes.get(i).getValor();
+        for (int i = 0; i < ordenes.size(); i++) { 
+            total += ordenes.get(i).getValor(); 
         }
         return total;
     }
