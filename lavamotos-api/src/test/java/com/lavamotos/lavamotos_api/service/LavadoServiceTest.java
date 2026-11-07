@@ -1,6 +1,7 @@
 package com.lavamotos.lavamotos_api.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.LocalDateTime;
 
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import com.lavamotos.lavamotos_api.dto.SolicitudLavado;
+import com.lavamotos.lavamotos_api.exception.DatosInvalidosException;
 import com.lavamotos.lavamotos_api.model.OrdenLavado;
 import com.lavamotos.lavamotos_api.model.TipoServicio;
 
@@ -65,4 +67,27 @@ public class LavadoServiceTest {
     void totalSinLavados() {
         assertEquals(0.0, service.totalRecaudado(), 0.001);
     }
+
+    @Test
+    @DisplayName("Regresión: con una sola orden el total es su valor")
+    void totalConUnaOrden() {
+        service.registrar(new SolicitudLavado("AAA11A", 125, TipoServicio.BASICO), OCHO_AM);
+        assertEquals(15000.0, service.totalRecaudado(), 0.001);
+    }
+
+    @Test
+    @DisplayName("Regresión: PREMIUM que entra a las 23:00 se entrega a las 00:10 del día siguiente")
+    void entregaCruzaMedianoche() {
+        LocalDateTime noche = LocalDateTime.of(2026, 11, 9, 23, 0);
+        OrdenLavado o = service.registrar(new SolicitudLavado("ZZZ99Z", 150, TipoServicio.PREMIUM), noche);
+        assertEquals(LocalDateTime.of(2026, 11, 10, 0, 10), o.getHoraEntregaEstimada());
+    }
+
+    @Test
+    @DisplayName("Regresión: placa vacía lanza DatosInvalidosException")
+    void placaVacia() {
+        assertThrows(DatosInvalidosException.class,
+                () -> service.registrar(new SolicitudLavado("   ", 125, TipoServicio.BASICO), OCHO_AM));
+    }
+
 }
